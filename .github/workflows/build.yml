@@ -1,0 +1,41 @@
+name: Build Horjit Music APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Horjit_Music_Source_Branding_No_Package_Change.zip'
+      - '.github/workflows/build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract Android project
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          unzip -q Horjit_Music_Source_Branding_No_Package_Change.zip -d source
+          test -f source/Square-master/gradlew
+
+      - name: Set up project toolchain
+        uses: ./source/Square-master/.github/actions/setup
+
+      - name: Build APK
+        working-directory: source/Square-master
+        run: ./gradlew :app:assembleDev --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Horjit-Music-APK
+          path: source/Square-master/app/build/outputs/apk/dev/app-universal-dev.apk
+          if-no-files-found: error
+          retention-days: 14
+          
